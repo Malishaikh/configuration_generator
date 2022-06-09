@@ -1,0 +1,62 @@
+############ MPE1 and MPE2 Configs ############
+
+{% for item in vnni %}
+
+set interfaces ae100 unit {{ item.fsg_stag }} description "CUST_VNNI: MyRepublic - {{ item.poi_code }} VNNI {{'{'}}{{ item.nnl_id }}{{'}'}} (CVC:{{ item.current_bandwidth }}Mbit) [{{ item.nni_link_speed }}Mbit]"
+set interfaces ae100 unit {{ item.fsg_stag }} encapsulation vlan-ccc
+set interfaces ae100 unit {{ item.fsg_stag }} vlan-tags outer {{ item.fsg_stag }}
+set interfaces ae100 unit {{ item.fsg_stag }} vlan-tags inner-range 50-69
+set interfaces ae100 unit {{ item.fsg_stag }} input-vlan-map pop
+set interfaces ae100 unit {{ item.fsg_stag }} output-vlan-map push
+set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae100.{{ item.fsg_stag }} virtual-circuit-id {{ item.fsg_stag }}
+set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae100.{{ item.fsg_stag }} mtu 9100
+set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae100.{{ item.fsg_stag }} encapsulation-type ethernet
+set class-of-service interfaces ae100 unit {{ item.fsg_stag }} output-traffic-control-profile CVC95-{{ item.current_bandwidth }}M
+
+set interfaces ae101 unit {{ item.fsg_stag }} description "CUST_VNNI: MyRepublic - {{ item.poi_code }} VNNI {{'{'}}{{ item.nnl_id }}{{'}'}} (CVC:{{ item.current_bandwidth }}Mbit) [{{ item.nni_link_speed }}Mbit]"
+set interfaces ae101 unit {{ item.fsg_stag }} encapsulation vlan-ccc
+set interfaces ae101 unit {{ item.fsg_stag }} vlan-tags outer {{ item.fsg_stag }}
+set interfaces ae101 unit {{ item.fsg_stag }} vlan-tags inner-range 50-69
+set interfaces ae101 unit {{ item.fsg_stag }} input-vlan-map pop
+set interfaces ae101 unit {{ item.fsg_stag }} output-vlan-map push
+set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae101.{{ item.fsg_stag }} virtual-circuit-id {{ item.fsg_stag }}
+set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae101.{{ item.fsg_stag }} mtu 9100
+set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae101.{{ item.fsg_stag }} encapsulation-type ethernet
+set class-of-service interfaces ae101 unit {{ item.fsg_stag }} output-traffic-control-profile CVC95-{{ item.current_bandwidth }}M
+{% endfor %}
+
+
+
+############ DPI01 and DPI02 Configs ############
+
+{% for item in vnni %}
+vlan {{ item.myr_stag }}
+name {{ item.poi_code }}
+
+interface Port-Channel100.{{ item.myr_stag }}
+   description {{ item.poi_code }} VNNI {{'{'}}{{ item.nnl_id }}{{'}'}} ({{ item.nbn_cvc_id }}) [{{ item.nni_link_speed }}Mbit]
+   mtu 9214
+   encapsulation dot1q vlan {{ item.fsg_stag }} inner 50
+   vlan id {{ item.myr_stag }}
+!
+interface {{ item.switch_port }}.{{ item.myr_stag }}
+   description {{ item.poi_code }} VNNI {{'{'}}{{ item.nnl_id }}{{'}'}} ({{ item.nbn_cvc_id }}) [{{ item.nni_link_speed }}Mbit]
+   mtu 9214
+   encapsulation dot1q vlan {{ item.myr_stag }}
+   vlan id {{ item.myr_stag }}
+!
+{% endfor %}
+
+############ Remote PE Configs ############
+
+{% for item in vnni %}
+
+{{ item.poi_code }}:
+set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} virtual-circuit-id {{ item.fsg_stag }}
+set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} mtu 9100
+set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} encapsulation-type ethernet
+set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} backup-neighbor 103.197.232.205 virtual-circuit-id {{ item.fsg_stag }}
+set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} backup-neighbor 103.197.232.205 standby
+
+{% endfor %}
+
