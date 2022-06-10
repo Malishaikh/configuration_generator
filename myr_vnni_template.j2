@@ -1,4 +1,4 @@
-############ MPE1 and MPE2 Configs ############
+############ MPE1 Configs ############
 
 {% for item in vnni %}
 
@@ -12,7 +12,11 @@ set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae100.{{ item.fs
 set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae100.{{ item.fsg_stag }} mtu 9100
 set protocols l2circuit neighbor {{ item.nbn_pe_ip }} interface ae100.{{ item.fsg_stag }} encapsulation-type ethernet
 set class-of-service interfaces ae100 unit {{ item.fsg_stag }} output-traffic-control-profile CVC95-{{ item.current_bandwidth }}M
+{% endfor %}
 
+############ MPE2 Configs ############
+
+{% for item in vnni %}
 set interfaces ae101 unit {{ item.fsg_stag }} description "CUST_VNNI: MyRepublic - {{ item.poi_code }} VNNI {{'{'}}{{ item.nnl_id }}{{'}'}} (CVC:{{ item.current_bandwidth }}Mbit) [{{ item.nni_link_speed }}Mbit]"
 set interfaces ae101 unit {{ item.fsg_stag }} encapsulation vlan-ccc
 set interfaces ae101 unit {{ item.fsg_stag }} vlan-tags outer {{ item.fsg_stag }}
@@ -51,12 +55,13 @@ interface {{ item.switch_port }}.{{ item.myr_stag }}
 
 {% for item in vnni %}
 
-{{ item.poi_code }}:
-set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} virtual-circuit-id {{ item.fsg_stag }}
-set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} mtu 9100
-set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} encapsulation-type ethernet
-set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} backup-neighbor 103.197.232.205 virtual-circuit-id {{ item.fsg_stag }}
-set protocols l2circuit neighbor 103.197.232.204 interface {{ nbn_pe_interface }} backup-neighbor 103.197.232.205 standby
+{{ item.nbn_pe_ip }}
+{{ item.poi_code }}
+set protocols l2circuit neighbor 103.197.232.205 interface {{ item.nbn_pe_interface }}.{{ item.fsg_stag }} virtual-circuit-id {{ item.fsg_stag }}
+set protocols l2circuit neighbor 103.197.232.205 interface {{ item.nbn_pe_interface }}.{{ item.fsg_stag }} mtu 9100
+set protocols l2circuit neighbor 103.197.232.205 interface {{ item.nbn_pe_interface }}.{{ item.fsg_stag }} encapsulation-type ethernet
+set protocols l2circuit neighbor 103.197.232.205 interface {{ item.nbn_pe_interface }}.{{ item.fsg_stag }} backup-neighbor 103.197.232.204 virtual-circuit-id {{ item.fsg_stag }}
+set protocols l2circuit neighbor 103.197.232.205 interface {{ item.nbn_pe_interface }}.{{ item.fsg_stag }} backup-neighbor 103.197.232.204 standby
 
 {% endfor %}
 
